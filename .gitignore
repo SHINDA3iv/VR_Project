@@ -1,0 +1,39 @@
+# Игнорировать системные файлы и настройки IDE
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+
+# Игнорировать файлы автосохранения Unity
+/[Aa]ssets/Plugins/Editor/*/*.cs.meta
+
+# Игнорировать пользовательские настройки
+UserSettings/
+*.swp
+*.lock
+*.tmp
+*.bak
+*.pid
+*.suo
+*.user
+*.userprefs
+*.csproj
+*.unityproj
+*.sln
+*.sln.DotSettings
+
+# Игнорировать файлы, генерируемые Unity
+/Assets/StreamingAssets/UnityAnalytics/
+
+# Игнорировать файлы, специфичные для ОС
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Игнорировать файлы билда
+/[Aa]ssets/AddressableAssetsData/AssetGroups/*.bin*
+/[Aa]ddressables_content_state.bin
+/[Bb]uilds/*
