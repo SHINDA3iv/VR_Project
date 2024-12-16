@@ -27,13 +27,7 @@ public class EnemyBehaviour : MonoBehaviour
         if (tree != null)
         {
             target = tree.transform;
-            Vector3 globalTargetPosition = target.position; // Позиция уже в глобальных координатах
-            SetEnemyStats();
-
-            if (agent != null)
-            {
-                agent.SetDestination(globalTargetPosition); // Направляем врага к цели
-            }
+            agent.SetDestination(target.position);
         }
     }
 
@@ -51,31 +45,33 @@ public class EnemyBehaviour : MonoBehaviour
         }
     }
 
-    private void SetEnemyStats()
+    public void SetStats(float healthMultiplier, float damageMultiplier)
     {
-        // Задаём характеристики в зависимости от типа врага
         switch (enemyType)
         {
             case EnemyType.Weak:
-                health = 50f;
-                damage = 5f;
+                health = 50f * healthMultiplier;
+                damage = 5f * damageMultiplier;
                 speed = 3.5f;
                 break;
 
             case EnemyType.Normal:
-                health = 100f;
-                damage = 10f;
+                health = 100f * healthMultiplier;
+                damage = 10f * damageMultiplier;
                 speed = 2.5f;
                 break;
 
             case EnemyType.Strong:
-                health = 150f;
-                damage = 20f;
+                health = 150f * healthMultiplier;
+                damage = 20f * damageMultiplier;
                 speed = 1.5f;
                 break;
         }
 
-        agent.speed = speed; // Устанавливаем скорость движения
+        if (agent != null)
+        {
+            agent.speed = speed;
+        }
     }
 
     private void DealDamageToTree()

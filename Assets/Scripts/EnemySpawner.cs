@@ -11,10 +11,17 @@ public class EnemySpawner : MonoBehaviour
     private float timeSinceLastSpawn;
     private List<Vector3> spawnPoints = new List<Vector3>(); // Список точек для спавна
 
+    private int enemiesPerSpawn = 5; // Количество врагов за раз
+    private int totalEnemiesInWave = 15; // Всего врагов в одной волне
+    private float healthMultiplier = 1f; // Множитель здоровья врагов
+    private float damageMultiplier = 1f; // Множитель урона врагов
+    private int lastWaveNum = 0;
+
     private void Start()
     {
         // Генерация точек спавна только для текущего объекта
         GenerateSpawnPoints();
+        StartCoroutine(SpawnWave());
     }
 
     private void Update()
@@ -68,26 +75,54 @@ public class EnemySpawner : MonoBehaviour
         Debug.Log($"Сгенерировано точек спавна: {spawnPoints.Count}");
     }
 
-    private void SpawnEnemy()
+    private IEnumerator SpawnWave()
     {
-        if (spawnPoints.Count == 0)
+        while (true)
         {
-            Debug.LogWarning("Нет доступных точек для спавна!");
-            return;
+            for (int i = 0; i < totalEnemiesInWave; i += enemiesPerSpawn)
+            {
+                SpawnEnemies(enemiesPerSpawn);
+                yield return new WaitForSeconds(spawnInterval);
+            }
+
+            yield return StartCoroutine(WaitForNextWave());
+
+            // Усиливаем врагов с каждой волной
+            healthMultiplier *= 1.05f;
+            damageMultiplier *= 1.05f;
         }
+    }
 
-        // Выбираем случайную точку спавна
-        Vector3 spawnPosition = spawnPoints[Random.Range(0, spawnPoints.Count)];
+    private void SpawnEnemies(int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (spawnPoints.Count == 0)
+            {
+                Debug.LogWarning("Нет доступных точек для спавна!");
+                return;
+            }
 
-        // Определяем тип врага с учетом вероятности появления
-        int enemyIndex = GetEnemyTypeBasedOnProbability();
+            // Выбираем случайную точку спавна
+            Vector3 spawnPosition = spawnPoints[Random.Range(0, spawnPoints.Count)];
 
-        // Создаём врага
-        GameObject enemy = Instantiate(enemyPrefabs[enemyIndex], spawnPosition, Quaternion.identity);
+            // Определяем тип врага с учетом вероятности появления
+            int enemyIndex = GetEnemyTypeBasedOnProbability();
 
-        // Поднимаем врага на половину его высоты
-        float heightOffset = GetEnemyHeight(enemy) / 2f;
-        enemy.transform.position += Vector3.up * heightOffset;
+            // Создаём врага
+            GameObject enemy = Instantiate(enemyPrefabs[enemyIndex], spawnPosition, Quaternion.identity);
+
+            // Поднимаем врага на половину его высоты
+            float heightOffset = GetEnemyHeight(enemy) / 2f;
+            enemy.transform.position += Vector3.up * heightOffset;
+
+
+            EnemyBehaviour enemyBehaviour = enemy.GetComponent<EnemyBehaviour>();
+            if (enemyBehaviour != null)
+            {
+                enemyBehaviour.SetStats(healthMultiplier, damageMultiplier);
+            }
+        }
     }
 
     private float GetEnemyHeight(GameObject enemy)
@@ -126,5 +161,20 @@ public class EnemySpawner : MonoBehaviour
         {
             return 2; // Strong
         }
+    }
+
+    private IEnumerator WaitForNextWave()
+    {
+        bool playerReady = false;
+
+        // Показываем меню и ждём, пока игрок не выберет "Продолжить"
+        UIManager.Instance.ShowNextWaveMenu(() => playerReady = true);
+
+        while (!playerReady)
+        {
+            yield return null;
+        }
+
+        UIManager.Instance.HideNextWaveMenu();
     }
 }
