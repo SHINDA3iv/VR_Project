@@ -9,36 +9,56 @@ public class SnowBlower : MonoBehaviour
     public float snowballForce = 10f; // Сила выстрела
 
     private bool canFire = true; // Флаг, разрешающий стрельбу
+    public int maxAmmo = 10;
 
-    void Update()
+    private int currentAmmo;
+    private bool isReloading;
+
+    void Start()
     {
-        // Проверяем, нажата ли кнопка для стрельбы (например, левая кнопка мыши или кнопка на контроллере)
-        if (Input.GetButtonDown("Fire1") && canFire)
+        currentAmmo = maxAmmo;
+        StartCoroutine(HandleShooting());
+    }
+
+    private IEnumerator HandleShooting()
+    {
+        while (true)
         {
-            FireSnowball();
+            if (Input.GetButton("Fire1") && canFire)
+            {
+                FireSnowball();
+                currentAmmo--;
+                UIManager.Instance.UpdateAmmoUI(currentAmmo, maxAmmo);
+
+                if (currentAmmo <= 0)
+                {
+                    StartCoroutine(Reload());
+                }
+
+                yield return new WaitForSeconds(fireRate);
+            }
+            else
+            {
+                yield return null;
+            }
         }
     }
 
-    void FireSnowball()
+    private void FireSnowball()
     {
-        // Создаем снежок на точке выстрела
         GameObject snowball = Instantiate(snowballPrefab, firePoint.position, firePoint.rotation);
-
-        // Применяем силу к снежку
         Rigidbody rb = snowball.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.AddForce(firePoint.forward * snowballForce, ForceMode.VelocityChange);
-        }
-
-        // Запускаем корутину для перезарядки
-        StartCoroutine(Reload());
+        if (rb != null) rb.AddForce(firePoint.forward * 10f, ForceMode.Impulse);
     }
 
-    IEnumerator Reload()
+    private IEnumerator Reload()
     {
-        canFire = false; // Запрещаем стрелять
-        yield return new WaitForSeconds(fireRate); // Ждем некоторое время, чтобы перезарядиться
-        canFire = true; // Разрешаем стрельбу
+        isReloading = true;
+        UIManager.Instance.ShowReloadText(true);
+        yield return new WaitForSeconds(reloadTime);
+        currentAmmo = maxAmmo;
+        UIManager.Instance.ShowReloadText(false);
+        UIManager.Instance.UpdateAmmoUI(currentAmmo, maxAmmo);
+        isReloading = false;
     }
 }

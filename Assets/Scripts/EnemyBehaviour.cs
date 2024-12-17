@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,31 +8,29 @@ public enum EnemyType { Weak, Normal, Strong }
 
 public class EnemyBehaviour : MonoBehaviour
 {
+    public Action OnDeath;
+
     public EnemyType enemyType;
 
     private float health;
     private float damage;
     private float speed;
 
-    private Transform target; // Ссылка на ёлку
+    private Transform treeTarget;
     private NavMeshAgent agent;
 
     private bool isNearTree = false; // Флаг нахождения рядом с ёлкой
-    private float damageInterval = 1f; // Интервал нанесения урона
-    private float damageTimer = 0f; // Таймер для урона
 
-    private void Start()
+    private Coroutine damageCoroutine;
+
+    void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        GameObject tree = GameObject.FindWithTag("Tree");
-        if (tree != null)
-        {
-            target = tree.transform;
-            agent.SetDestination(target.position);
-        }
+        treeTarget = GameObject.FindWithTag("Tree")?.transform;
+        if (treeTarget != null) agent.SetDestination(treeTarget.position);
     }
 
-    private void Update()
+    void Update()
     {
         // Если враг находится рядом с ёлкой, наносим ей урон
         if (isNearTree)
@@ -68,19 +67,7 @@ public class EnemyBehaviour : MonoBehaviour
                 break;
         }
 
-        if (agent != null)
-        {
-            agent.speed = speed;
-        }
-    }
-
-    private void DealDamageToTree()
-    {
-        TreeBehaviour tree = target.GetComponent<TreeBehaviour>();
-        if (tree != null)
-        {
-            tree.TakeDamage(10); // Наносим ёлке 10 урона
-        }
+        agent.speed = speed;
     }
 
     public void TakeDamage(float damageAmount)
@@ -98,19 +85,42 @@ public class EnemyBehaviour : MonoBehaviour
         Destroy(gameObject);
     }
 
-    private void OnTriggerEnter(Collider other)
+    void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Tree"))
         {
             isNearTree = true;
+            if (damageCoroutine == null)
+            {
+                damageCoroutine = StartCoroutine(DamageTreeOverTime());
+            }
         }
     }
 
-    private void OnTriggerExit(Collider other)
+    void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Tree"))
         {
             isNearTree = false;
+            if (damageCoroutine != null) 
+            {
+                StopCoroutine(damageCoroutine);
+                damageCoroutine = null;
+            }
+        }
+    }
+
+
+    private IEnumerator DamageTreeOverTime()
+    {
+        while (isNearTree)
+        {
+            TreeBehaviour tree = treeTarget.GetComponent<TreeBehaviour>();
+            if (tree != null)
+            {
+                tree.TakeDamage((int)damage);
+            }
+            yield return new WaitForSeconds(1f);
         }
     }
 }

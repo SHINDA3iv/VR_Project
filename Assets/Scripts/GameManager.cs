@@ -4,25 +4,16 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance;
 
-    public static GameManager gameManager;
-
-    GameOverScript gameOverScript;
-
-    void Awake()
+    private void Awake()
     {
-        gameManager = this;
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
 
-    void Start()
+    public void RestartGame()
     {
-        gameOverScript = FindObjectOfType<GameOverScript>();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
-
-
-
-    private void EndGame()
-    {
-    }
-
 }
